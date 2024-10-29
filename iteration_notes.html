@@ -396,7 +396,8 @@ there are fewer things to worry about.</p>
 <div id="time-to-code" class="section level1">
 <h1>Time to Code</h1>
 <pre class="r"><code>library(tidyverse)
-library(rvest)</code></pre>
+library(rvest)
+library(knitr)</code></pre>
 <div id="heres-some-lists" class="section level2">
 <h2>Here’s some lists</h2>
 <pre class="r"><code>l = list(
@@ -415,10 +416,10 @@ library(rvest)</code></pre>
   )
 
 list_norm$b</code></pre>
-<pre><code>##  [1]  3.9562734  7.5278738  6.9480221  2.7505953  4.3526345 -0.1335583
-##  [7] 10.0537684  6.7950253 -0.6144177  4.9199174  7.6278706  3.7685365
-## [13]  5.4890772 10.4262103  5.4090509  0.9587494  5.3555408 -2.4767983
-## [19]  2.1999809  2.3918878</code></pre>
+<pre><code>##  [1]  0.1213103  1.7802485  1.2375414 -4.8540981 11.5330399  3.8876808
+##  [7]  9.9437776  8.8533430  5.7979206  8.4085494  2.7318079  1.4931797
+## [13] -6.6634099 12.1628758  6.5097574  5.2735724  7.4294221 13.7433096
+## [19] 11.3150966  2.9059683</code></pre>
 <p>lets reuse the function we wrote last time:</p>
 <pre class="r"><code>mean_and_sd = function(x) {
   
@@ -438,22 +439,271 @@ list_norm$b</code></pre>
 <pre><code>## # A tibble: 1 × 2
 ##    mean    sd
 ##   &lt;dbl&gt; &lt;dbl&gt;
-## 1 -1.91  6.43</code></pre>
+## 1 -3.10  5.02</code></pre>
 <pre class="r"><code>mean_and_sd(list_norm$b)</code></pre>
 <pre><code>## # A tibble: 1 × 2
 ##    mean    sd
 ##   &lt;dbl&gt; &lt;dbl&gt;
-## 1  4.39  3.41</code></pre>
+## 1  5.18  5.50</code></pre>
 <pre class="r"><code>mean_and_sd(list_norm$c)</code></pre>
-<pre><code>## # A tibble: 1 × 2
-##    mean    sd
-##   &lt;dbl&gt; &lt;dbl&gt;
-## 1  1.77  8.64</code></pre>
-<pre class="r"><code>mean_and_sd(list_norm$d) </code></pre>
 <pre><code>## # A tibble: 1 × 2
 ##     mean    sd
 ##    &lt;dbl&gt; &lt;dbl&gt;
-## 1 -0.512  13.1</code></pre>
+## 1 -0.477  11.2</code></pre>
+<pre class="r"><code>mean_and_sd(list_norm$d) </code></pre>
+<pre><code>## # A tibble: 1 × 2
+##    mean    sd
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1  3.73  9.30</code></pre>
+<p>If I had 400 of these, it would not be easy to make sure this still
+worked using this way. That is what loops are for!</p>
+</div>
+<div id="use-a-for-loop" class="section level2">
+<h2>Use a for loop</h2>
+<p>create output list and run a for loop:</p>
+<pre class="r"><code>output = vector(&quot;list&quot;, length = 4) 
+
+for (i in 1:4) { 
+  
+  output[[i]] = mean_and_sd(list_norm[[i]])
+  
+  }
+
+output </code></pre>
+<pre><code>## [[1]]
+## # A tibble: 1 × 2
+##    mean    sd
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1 -3.10  5.02
+## 
+## [[2]]
+## # A tibble: 1 × 2
+##    mean    sd
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1  5.18  5.50
+## 
+## [[3]]
+## # A tibble: 1 × 2
+##     mean    sd
+##    &lt;dbl&gt; &lt;dbl&gt;
+## 1 -0.477  11.2
+## 
+## [[4]]
+## # A tibble: 1 × 2
+##    mean    sd
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1  3.73  9.30</code></pre>
+</div>
+<div id="do-the-same-thing-with-map" class="section level2">
+<h2>Do the same thing with map</h2>
+<pre class="r"><code>output = map(list_norm, mean_and_sd) </code></pre>
+<p>^ this line of code is the same thing that we did above. I think map
+is more intuitive but there are a lot of ways to do this. Map seems
+fantastic.</p>
+<p>Lets do a couple of other things:</p>
+<pre class="r"><code>output = map(list_norm, median)
+output_iqr = map(list_norm, IQR)
+
+output_iqr2 = map_dbl(list_norm, IQR)
+
+output_rows = 
+  map(list_norm, mean_and_sd) |&gt; 
+  bind_rows()</code></pre>
+</div>
+<div id="list-columns" class="section level2">
+<h2>List Columns!!</h2>
+<p>Lets get tidy : )</p>
+<pre class="r"><code>listcol_df = 
+  tibble(
+    name = c(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;), 
+    samp = list_norm
+  )
+
+listcol_df |&gt; 
+  filter(name %in% c(&quot;a&quot;, &quot;b&quot;))</code></pre>
+<pre><code>## # A tibble: 2 × 2
+##   name  samp        
+##   &lt;chr&gt; &lt;named list&gt;
+## 1 a     &lt;dbl [20]&gt;  
+## 2 b     &lt;dbl [20]&gt;</code></pre>
+<pre class="r"><code>listcol_df |&gt;  
+  select(-samp)</code></pre>
+<pre><code>## # A tibble: 4 × 1
+##   name 
+##   &lt;chr&gt;
+## 1 a    
+## 2 b    
+## 3 c    
+## 4 d</code></pre>
+<p>This whole df is still a list! You can access list variable like we
+have done, see below.</p>
+<pre class="r"><code>listcol_df[[&quot;samp&quot;]][[&quot;a&quot;]]</code></pre>
+<pre><code>##  [1]  -2.3289258  -3.3274836  -8.3260678  -3.9173241  -2.7971945   3.0231233
+##  [7]   0.9460208  -3.5160269   2.6009724  -6.0411316  -9.1375066  -4.5741573
+## [13]  -0.4151451   5.5087717   2.6077985 -14.6831726  -7.7136760   0.7926520
+## [19]  -8.6969760  -1.9527596</code></pre>
+<p>compute mean and sd</p>
+<pre class="r"><code>mean_and_sd(listcol_df[[&quot;samp&quot;]][[&quot;a&quot;]])</code></pre>
+<pre><code>## # A tibble: 1 × 2
+##    mean    sd
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1 -3.10  5.02</code></pre>
+<p>Since its still just a list, I can do the same things I have done
+before. We can map over a list and compute a given function.</p>
+<pre class="r"><code>output_list = map(listcol_df[[&quot;samp&quot;]], mean_and_sd)
+output_list</code></pre>
+<pre><code>## $a
+## # A tibble: 1 × 2
+##    mean    sd
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1 -3.10  5.02
+## 
+## $b
+## # A tibble: 1 × 2
+##    mean    sd
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1  5.18  5.50
+## 
+## $c
+## # A tibble: 1 × 2
+##     mean    sd
+##    &lt;dbl&gt; &lt;dbl&gt;
+## 1 -0.477  11.2
+## 
+## $d
+## # A tibble: 1 × 2
+##    mean    sd
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1  3.73  9.30</code></pre>
+<p>Refresher - what is going on?</p>
+<p>The goal of map is to iterate across inputs, apply a function, and
+spit out results. We tell it what to input, what function to apply, and
+it automatically produces the output. Is it creating a new column? Not
+yet, you have to tell it to.</p>
+<p>Add list column:</p>
+<pre class="r"><code>listcol_df = 
+  listcol_df|&gt;
+  mutate(output = map(samp, mean_and_sd), 
+         iqr = map_dbl(samp, IQR)) 
+
+listcol_df = 
+  listcol_df|&gt;
+  mutate(output = map_dfr(samp, mean_and_sd), 
+         iqr = map_dbl(samp, IQR)) 
+
+listcol_df = 
+  listcol_df|&gt;
+  mutate(output = map(samp, mean_and_sd), 
+         iqr = map_dbl(samp, IQR)) |&gt; 
+  select(-samp) |&gt; 
+  unnest(output)</code></pre>
+<div id="nsduh" class="section level3">
+<h3>NSDUH</h3>
+<p>Want to have a df that includes the drug, extracts tables, and puts
+everything in one dataset.</p>
+<p>version of function from before:</p>
+<pre class="r"><code>nsduh_table_format = function(html, table_num) {
+  
+  out_table = 
+    html |&gt; 
+    html_table() |&gt; 
+    nth(table_num) |&gt; 
+    slice(-1) |&gt; 
+    select(-contains(&quot;P Value&quot;)) 
+  
+  return(out_table)
+}</code></pre>
+<p>Now lets import the html and extract correct tables:</p>
+<pre class="r"><code>nsduh_url = &quot;http://samhda.s3-us-gov-west-1.amazonaws.com/s3fs-public/field-uploads/2k15StateFiles/NSDUHsaeShortTermCHG2015.htm&quot;
+
+nsduh_html = read_html(nsduh_url)</code></pre>
+<pre class="r"><code>nsduh_table_format(html = nsduh_html, table_num = 1)</code></pre>
+<pre><code>## # A tibble: 56 × 11
+##    State `12+(2013-2014)` `12+(2014-2015)` `12-17(2013-2014)` `12-17(2014-2015)`
+##    &lt;chr&gt; &lt;chr&gt;            &lt;chr&gt;            &lt;chr&gt;              &lt;chr&gt;             
+##  1 Tota… 12.90a           13.36            13.28b             12.86             
+##  2 Nort… 13.88a           14.66            13.98              13.51             
+##  3 Midw… 12.40b           12.76            12.45              12.33             
+##  4 South 11.24a           11.64            12.02              11.88             
+##  5 West  15.27            15.62            15.53a             14.43             
+##  6 Alab… 9.98             9.60             9.90               9.71              
+##  7 Alas… 19.60a           21.92            17.30              18.44             
+##  8 Ariz… 13.69            13.12            15.12              13.45             
+##  9 Arka… 11.37            11.59            12.79              12.14             
+## 10 Cali… 14.49            15.25            15.03              14.11             
+## # ℹ 46 more rows
+## # ℹ 6 more variables: `18-25(2013-2014)` &lt;chr&gt;, `18-25(2014-2015)` &lt;chr&gt;,
+## #   `26+(2013-2014)` &lt;chr&gt;, `26+(2014-2015)` &lt;chr&gt;, `18+(2013-2014)` &lt;chr&gt;,
+## #   `18+(2014-2015)` &lt;chr&gt;</code></pre>
+<pre class="r"><code>nsduh_table_format(html = nsduh_html, table_num = 4)</code></pre>
+<pre><code>## # A tibble: 56 × 11
+##    State `12+(2013-2014)` `12+(2014-2015)` `12-17(2013-2014)` `12-17(2014-2015)`
+##    &lt;chr&gt; &lt;chr&gt;            &lt;chr&gt;            &lt;chr&gt;              &lt;chr&gt;             
+##  1 Tota… 1.66a            1.76             0.60               0.64              
+##  2 Nort… 1.94a            2.18             0.60               0.66              
+##  3 Midw… 1.37             1.43             0.48               0.54              
+##  4 South 1.45b            1.56             0.53               0.57              
+##  5 West  2.03             2.05             0.82               0.85              
+##  6 Alab… 1.23             1.22             0.42               0.41              
+##  7 Alas… 1.54a            2.00             0.51               0.65              
+##  8 Ariz… 2.25             2.29             1.01               0.85              
+##  9 Arka… 0.93             1.07             0.41               0.48              
+## 10 Cali… 2.14             2.16             0.89               0.94              
+## # ℹ 46 more rows
+## # ℹ 6 more variables: `18-25(2013-2014)` &lt;chr&gt;, `18-25(2014-2015)` &lt;chr&gt;,
+## #   `26+(2013-2014)` &lt;chr&gt;, `26+(2014-2015)` &lt;chr&gt;, `18+(2013-2014)` &lt;chr&gt;,
+## #   `18+(2014-2015)` &lt;chr&gt;</code></pre>
+<pre class="r"><code>nsduh_table_format(html = nsduh_html, table_num = 5)</code></pre>
+<pre><code>## # A tibble: 56 × 11
+##    State `12+(2013-2014)` `12+(2014-2015)` `12-17(2013-2014)` `12-17(2014-2015)`
+##    &lt;chr&gt; &lt;chr&gt;            &lt;chr&gt;            &lt;chr&gt;              &lt;chr&gt;             
+##  1 Tota… 0.30             0.33             0.12               0.10              
+##  2 Nort… 0.43a            0.54             0.13               0.13              
+##  3 Midw… 0.30             0.31             0.11               0.10              
+##  4 South 0.27             0.26             0.12               0.08              
+##  5 West  0.25             0.29             0.13               0.11              
+##  6 Alab… 0.22             0.27             0.10               0.08              
+##  7 Alas… 0.70a            1.23             0.11               0.08              
+##  8 Ariz… 0.32a            0.55             0.17               0.20              
+##  9 Arka… 0.19             0.17             0.10               0.07              
+## 10 Cali… 0.20             0.20             0.13               0.09              
+## # ℹ 46 more rows
+## # ℹ 6 more variables: `18-25(2013-2014)` &lt;chr&gt;, `18-25(2014-2015)` &lt;chr&gt;,
+## #   `26+(2013-2014)` &lt;chr&gt;, `26+(2014-2015)` &lt;chr&gt;, `18+(2013-2014)` &lt;chr&gt;,
+## #   `18+(2014-2015)` &lt;chr&gt;</code></pre>
+<pre class="r"><code>nsduh_df_1 = 
+  tibble(
+    drug = c(&quot;marj&quot;, &quot;cocaine&quot;, &quot;heroin&quot;),
+    table_n = c(1,4,5)
+    ) |&gt; 
+  mutate(
+    table = map(
+      table_n, 
+      nsduh_table_format, 
+      html = nsduh_html)
+  ) |&gt; 
+  unnest(table) 
+
+nsduh_df_2 = 
+  tibble(
+    drug = c(&quot;marj&quot;, &quot;cocaine&quot;, &quot;heroin&quot;),
+    table_n = c(1,4,5)
+    ) |&gt; 
+  mutate(
+    table = map(
+      table_n,
+      \(x) nsduh_table_format(html = nsduh_html, table_num = x)))|&gt; 
+  unnest(table) </code></pre>
+<p>Now we two ways to get a data frame with all of this information and
+we did so using map. Rather than having to use a for loop, we put a
+column into a data set and now we have a regular ole df.</p>
+<pre class="r"><code>new_york = 
+  nsduh_df_2 |&gt;  
+  filter(State == &quot;New York&quot;) </code></pre>
+</div>
+<div id="weather-data-example" class="section level3">
+<h3>weather data example:</h3>
+</div>
 </div>
 </div>
 

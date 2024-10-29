@@ -53,6 +53,7 @@ Lists can contain lists. If you start with a df and have a new list column and w
 ```{r, message=FALSE}
 library(tidyverse)
 library(rvest)
+library(knitr)
 ```
 
 
@@ -170,9 +171,119 @@ listcol_df |>
 
 ```
 
+This whole df is still a list! You can access list variable like we have done, see below. 
 ```{r}
 listcol_df[["samp"]][["a"]]
 ```
 
+compute mean and sd 
+```{r}
+mean_and_sd(listcol_df[["samp"]][["a"]])
+```
+Since its still just a list, I can do the same things I have done before. We can map over a list and compute a given function. 
 
+```{r}
+output_list = map(listcol_df[["samp"]], mean_and_sd)
+output_list
+```
+
+Refresher - what is going on? 
+
+The goal of map is to iterate across inputs, apply a function, and spit out results. We tell it what to input, what function to apply, and it automatically produces the output. Is it creating a new column? Not yet, you have to tell it to. 
+
+
+Add list column: 
+```{r}
+listcol_df = 
+  listcol_df|>
+  mutate(output = map(samp, mean_and_sd), 
+         iqr = map_dbl(samp, IQR)) 
+
+listcol_df = 
+  listcol_df|>
+  mutate(output = map_dfr(samp, mean_and_sd), 
+         iqr = map_dbl(samp, IQR)) 
+
+listcol_df = 
+  listcol_df|>
+  mutate(output = map(samp, mean_and_sd), 
+         iqr = map_dbl(samp, IQR)) |> 
+  select(-samp) |> 
+  unnest(output)
+
+```
+
+### NSDUH 
+
+Want to have a df that includes the drug, extracts tables, and puts everything in one dataset. 
+
+version of function from before: 
+```{r}
+nsduh_table_format = function(html, table_num) {
+  
+  out_table = 
+    html |> 
+    html_table() |> 
+    nth(table_num) |> 
+    slice(-1) |> 
+    select(-contains("P Value")) 
+  
+  return(out_table)
+}
+
+```
+
+Now lets import the html and extract correct tables: 
+
+```{r}
+nsduh_url = "http://samhda.s3-us-gov-west-1.amazonaws.com/s3fs-public/field-uploads/2k15StateFiles/NSDUHsaeShortTermCHG2015.htm"
+
+nsduh_html = read_html(nsduh_url)
+
+```
+
+```{r}
+nsduh_table_format(html = nsduh_html, table_num = 1)
+nsduh_table_format(html = nsduh_html, table_num = 4)
+nsduh_table_format(html = nsduh_html, table_num = 5)
+```
+```{r}
+nsduh_df_1 = 
+  tibble(
+    drug = c("marj", "cocaine", "heroin"),
+    table_n = c(1,4,5)
+    ) |> 
+  mutate(
+    table = map(
+      table_n, 
+      nsduh_table_format, 
+      html = nsduh_html)
+  ) |> 
+  unnest(table) 
+
+nsduh_df_2 = 
+  tibble(
+    drug = c("marj", "cocaine", "heroin"),
+    table_n = c(1,4,5)
+    ) |> 
+  mutate(
+    table = map(
+      table_n,
+      \(x) nsduh_table_format(html = nsduh_html, table_num = x)))|> 
+  unnest(table) 
+
+```
+
+Now we two ways to get a data frame with all of this information and we did so using map. Rather than having to use a for loop, we put a column into a data set and now we have a regular ole df. 
+
+```{r}
+new_york = 
+  nsduh_df_2 |>  
+  filter(State == "New York") 
+```
+
+### weather data example: 
+```{r}
+
+```
 
