@@ -1,0 +1,114 @@
+---
+title: "Iteration"
+author: "Kaleb J. Frierson"
+date: "2024-10-29"
+output: html_document
+---
+
+# Notes
+
+for loops:
+
+Loops are the easiest place to start with iteration. Loops have a consistent output object. The basic structure: 
+
+input = list(...)
+output = list(...)
+
+for (i in 1:n) {
+output [[i]] = f(input[[i]])
+
+}
+
+Mapping across input list, running function, saving output. 
+
+Loop functions make your life easier. You can use them in the context of a tidyverse like approach. Makes your code easier to read. More focus on the things you are trying to do/change. Map function is in the purrr package and is a loop function that helps clean up loops. Don't use base R loop functions, they're terrible per Jeff. 
+
+output = map(input, f)
+
+This produces the same result as a for loop but is better because: [answer here]
+
+Map variants: 
+
+By default, map makes one input and will return a list. If you know what kind of output your function will produce you can change default settings. 
+
+Process: 
+
+Write a single example for fixed inputs. 
+Abstract example to a function
+Embed in a loop 
+Re-write useing a map statement 
+
+(IE build the car model)
+
+Lists: they exist, now we will worry about it. 
+
+R uses lists to keep track of anything you want to use. They're a collection of things. One list can have lots of different things in them. 
+
+Data frames - special kind of list. 
+
+Lists can contain lists. If you start with a df and have a new list column and want to put it into a df, you can put it in there. This is very helpful. Inside of your data frame you can have input list as a column. Keeping everything in one data frame with list columns means there are fewer things to worry about. 
+
+# Time to Code
+
+```{r, message=FALSE}
+library(tidyverse)
+library(rvest)
+```
+
+
+## Here's some lists 
+
+```{r}
+l = list(
+  vec_numeric = 1:4, 
+  unif_sample = runif(100), 
+  mat = matrix(1:8, nrow = 2, ncol = 4, byrow = TRUE), 
+  summary = summary(rnorm(1000))
+)
+
+```
+
+List more useful: 
+
+```{r}
+list_norm = 
+  list(
+    a = rnorm(20, 0, 5),
+    b = rnorm(20, 4, 5), 
+    c = rnorm(20, 0, 10), 
+    d = rnorm(20, 4, 10)
+  )
+
+list_norm$b
+```
+lets reuse the function we wrote last time: 
+```{r}
+mean_and_sd = function(x) {
+  
+  mean_x = mean(x)
+  sd_x = sd(x)
+  
+  out_df = 
+    tibble(
+      mean=mean_x, 
+      sd = sd_x
+    )
+  
+  return(out_df) 
+}
+
+
+```
+
+
+Lets use the function to take the mean and sd of all samples: 
+
+```{r}
+mean_and_sd(list_norm$a)
+mean_and_sd(list_norm$b)
+mean_and_sd(list_norm$c)
+mean_and_sd(list_norm$d) 
+```
+
+
+
