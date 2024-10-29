@@ -110,5 +110,69 @@ mean_and_sd(list_norm$c)
 mean_and_sd(list_norm$d) 
 ```
 
+If I had 400 of these, it would not be easy to make sure this still worked using this way. That is what loops are for!
+
+## Use a for loop
+
+create output list and run a for loop: 
+
+```{r}
+output = vector("list", length = 4) 
+
+for (i in 1:4) { 
+  
+  output[[i]] = mean_and_sd(list_norm[[i]])
+  
+  }
+
+output 
+
+```
+
+## Do the same thing with map 
+
+```{r}
+output = map(list_norm, mean_and_sd) 
+
+```
+
+^ this line of code is the same thing that we did above. I think map is more intuitive but there are a lot of ways to do this. Map seems fantastic. 
+
+Lets do a couple of other things: 
+
+```{r}
+output = map(list_norm, median)
+output_iqr = map(list_norm, IQR)
+
+output_iqr2 = map_dbl(list_norm, IQR)
+
+output_rows = 
+  map(list_norm, mean_and_sd) |> 
+  bind_rows()
+```
+
+## List Columns!!
+
+Lets get tidy : ) 
+
+```{r}
+listcol_df = 
+  tibble(
+    name = c("a", "b", "c", "d"), 
+    samp = list_norm
+  )
+
+listcol_df |> 
+  filter(name %in% c("a", "b"))
+
+listcol_df |>  
+  select(-samp)
+
+```
+
+```{r}
+listcol_df[["samp"]][["a"]]
+```
+
 
 
